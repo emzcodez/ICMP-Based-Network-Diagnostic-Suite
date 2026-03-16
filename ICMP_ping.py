@@ -6,7 +6,7 @@ import hmac
 import hashlib
 
 ICMP_ECHO_REQUEST = 8
-SECRET_KEY = b"my_super_secret_key"
+SECRET_KEY = b"343_332_344"
 
 def checksum(source_string):
     sum = 0

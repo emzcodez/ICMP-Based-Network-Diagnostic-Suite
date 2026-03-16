@@ -1,3 +1,4 @@
+
 # ICMP-Based Network Diagnostic Suite
 
 ## Overview
@@ -50,7 +51,7 @@ Example command:
 python main.py google.com github.com
 ```
 
-###7. **Security Implementation (HMAC-SHA256)**
+### 7. **Security Implementation (HMAC-SHA256)**
 Payload Authentication: To satisfy security requirements, every outgoing packet contains a payload signed with an HMAC-SHA256 signature.
 
 Verification: The tool verifies the signature of the reply against a shared secret key to prevent packet spoofing and tampering.

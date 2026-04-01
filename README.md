@@ -17,60 +17,9 @@ The program measures **round-trip time (RTT)**, calculates **packet loss**, and 
 
 ## Prerequisites
 
-- **Python 3.6+**
+- **Python 3.6+** with **tkinter** module installed
 - **Administrator/Root privileges** (required for raw socket access)
 - **Linux/macOS** (recommended) or Windows with appropriate permissions
-
-## Installation
-
-1. Clone or download this repository
-2. No additional dependencies required (uses Python standard library only)
-
-## Usage
-
-### Basic Usage
-
-```bash
-# Ping a single host
-sudo python3 main.py google.com
-
-# Ping multiple hosts
-sudo python3 main.py google.com github.com 8.8.8.8
-```
-
-**Note:** `sudo` is required on Linux/macOS for raw socket access. On Windows, run as Administrator.
-
-### Advanced Usage
-
-```bash
-# Send 10 pings with 3-second timeout
-sudo python3 main.py -c 10 -t 3.0 google.com
-
-# Use custom TTL of 30 hops
-sudo python3 main.py --ttl 30 google.com
-
-# Simulate 20% packet loss for testing
-sudo python3 main.py -l 0.2 google.com
-
-# Combine multiple options
-sudo python3 main.py -c 8 -t 1.5 --ttl 50 -l 0.15 cloudflare.com
-```
-
-### CLI Arguments
-
-| Argument | Short | Description | Default |
-|----------|-------|-------------|---------|
-| `hosts` | - | Target host(s) to ping | (mandatory) |
-| `--count` | `-c` | Number of ping requests | 4 |
-| `--timeout` | `-t` | Timeout in seconds per ping | 2.0 |
-| `--ttl` | - | Time To Live value | 64 |
-| `--loss` | `-l` | Packet loss simulation rate | 0.0 |
-
-### Get Help
-
-```bash
-python3 main.py -h
-```
 
 ## Core Functionality
 
@@ -124,7 +73,7 @@ The traceroute component discovers the network path to a destination by incremen
 2. Send an ICMP Echo Request
 3. The first router decrements TTL to 0 and returns **ICMP Time Exceeded**
 4. Record the router's IP address and RTT
-5. Increment TTL and repeat until the destination is reached (ICMP Echo Reply received)
+5. Increment TTL and repeat the iterative hops until the destination is reached (ICMP Echo Reply received)
 
 This reveals each **hop** (router) along the path to the destination, up to a maximum of **30 hops**.
 
@@ -136,17 +85,12 @@ This reveals each **hop** (router) along the path to the destination, up to a ma
 ### 6. Multi-Destination Support
 The tool accepts **multiple hosts as input** and performs diagnostics for each host sequentially.
 
-Example:
-```bash
-sudo python3 main.py google.com github.com cloudflare.com
-```
-
 Each host gets:
 - Its own ping sequence
 - RTT statistics
 - Complete traceroute
 
-### 7. Security Implementation (HMAC-SHA256)
+### 7. SSL Security Implementation (HMAC-SHA256)
 
 **Payload Authentication:**  
 Every outgoing packet contains a payload with:
@@ -164,20 +108,9 @@ Every outgoing packet contains a payload with:
 - Detects **packet tampering** (modified packets fail verification)
 - Ensures **data integrity** throughout transmission
 
-**Secret Key:** `b"343_332_344"` (defined in `ICMP_ping.py`)
-
 ### 8. Packet Loss Simulation
 The tool includes a **packet loss simulation feature** for testing and debugging purposes.
-
-**Usage:**
-```bash
-sudo python3 main.py -l 0.2 google.com  # 20% packet loss
-```
-
-**How it works:**
-- Before sending each packet, a random number is generated
-- If the random value is less than the loss rate, the packet is "dropped"
-- The dropped packet never gets sent, simulating real network packet loss
+Click on a packet to delete/loose it.
 
 **Use cases:**
 - Testing application resilience to network issues
@@ -195,26 +128,13 @@ Every ICMP packet includes a **checksum** field to verify data integrity during 
 
 This ensures corrupted packets are detected and discarded by receiving hosts.
 
-## Project Structure
-
-- **`main.py`** - Orchestrates the program flow, handles user input, and displays results
-- **`icmp_ping.py`** - Core ping functionality including packet creation, HMAC signing, and RTT measurement
-- **`traceroute.py`** - Implements hop-by-hop route discovery using TTL manipulation
-- **`stats.py`** - Computes statistics (min/max/avg RTT, packet loss percentage)
-- **`README.md`** - This file
-
 ## Execution Flow
 
 ```
-1. Parse CLI arguments (hosts, count, timeout, TTL, loss rate)
-2. For each destination host:
-   ├─→ Resolve hostname to IP address
-   ├─→ Send ICMP Echo Requests (with custom TTL, timeout, loss simulation)
-   ├─→ Measure RTT for each reply
-   ├─→ Calculate packet loss statistics
-   ├─→ Perform traceroute (TTL 1 → 30, discover each hop)
-   └─→ Display results
-3. Exit
+1. Processes each host sequentially
+2. Shows progress: "HOST 1/3", "HOST 2/3", etc.
+3. Displays separate statistics for each host
+4. Summary shown at completion
 ```
 
 ## Technical Details
@@ -246,14 +166,6 @@ IP Header (20 bytes) - Added by OS
    ├─ Timestamp (8 bytes): For RTT calculation
    └─ HMAC Signature (32 bytes): SHA-256 authentication
 ```
-
-## Limitations and Considerations
-
-⚠️ **Requires elevated privileges** - Raw sockets need root/admin access  
-⚠️ **Firewall interference** - Some firewalls block ICMP packets  
-⚠️ **No IPv6 support** - Currently only supports IPv4 addresses  
-⚠️ **Platform-dependent** - Best on Linux/macOS; Windows may have limitations  
-⚠️ **Network restrictions** - Some networks/ISPs filter or rate-limit ICMP traffic  
 
 ## Troubleshooting
 
